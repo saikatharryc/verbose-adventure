@@ -1,6 +1,11 @@
 const http = require('http');
+const path = require('path');
 const express = require('express');
 const Session = require('express-session');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const methodOverride = require('method-override');
+const swig = require('swig');
 const google = require('googleapis');
 const googleAuth = require('google-auth-library');
 const CONFIG = require('./client_secret.json');
@@ -12,6 +17,11 @@ const ClientSecret = CONFIG.client_secret;
 const RedirectionUrl = 'http://localhost:1234/oauthCallback';
 
 const app = express();
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.engine('html', swig.renderFile);
+app.set('view engine', 'html')
+
 app.use(Session({
   secret: CONFIG.client_secret,
   resave: true,
@@ -50,7 +60,7 @@ app.use('/oauthCallback', function (req, res) {
       session.tokens = tokens;
       res.send(`
             <h3>Login successful!!</h3>
-            <a href="/details">Go to details page<;/a>
+            <a href="/message">See message IDs from last month</a>
         `);
     } else {
       res.send(`
@@ -60,11 +70,12 @@ app.use('/oauthCallback', function (req, res) {
   });
 });
 
-app.use('/details', function (req, res) {
+app.use('/message', function (req, res) {
   const oauth2Client = getOAuthClient();
   oauth2Client.setCredentials(req.session.tokens);
 
   const gmail = google.gmail('v1');
+
   gmail.users.messages.list({
     userId: 'me',
     q: 'newer_than:31d',
@@ -78,6 +89,29 @@ app.use('/details', function (req, res) {
     res.send(response);
   });
 });
+
+app.use('/thread/:messageid', function (req, res) {
+  const msgId = req.params.messageid;
+  console.log({hi: msgId});
+  const oauth2Client = getOAuthClient();
+  oauth2Client.setCredentials(req.session.tokens);
+
+  const gmail = google.gmail('v1');
+
+  gmail.users.messages.get({
+    id: msgId,
+    userId: 'me',
+    auth: oauth2Client,
+  }, function (err, response) {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    console.log(response);
+    res.send(response);
+  });
+});
+
 
 app.use('/', function (req, res) {
   const url = getAuthUrl();
