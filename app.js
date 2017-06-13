@@ -1,140 +1,93 @@
+const http = require('http');
 const express = require('express');
-const passport = require('passport');
-const util = require('util');
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const session = require('express-session');
-const RedisStore = require('connect-redis')(session);
-const GoogleStrategy = require('passport-google-oauth2').Strategy;
+const Session = require('express-session');
+const google = require('googleapis');
 const CONFIG = require('./client_secret.json');
 
+const plus = google.plus('v1');
+const OAuth2 = google.auth.OAuth2;
+const ClientId = CONFIG.client_id;
+const ClientSecret = CONFIG.client_secret;
+const RedirectionUrl = 'http://localhost:1234/oauthCallback';
+
 const app = express();
-
-const server = require('http').createServer(app);
-// API Access link for creating client ID and secret:
-// https://code.google.com/apis/console/
-const GOOGLE_CLIENT_ID = CONFIG.client_id;
-const GOOGLE_CLIENT_SECRET = CONFIG.client_secret;
-
-// Passport session setup.
-//   To support persistent login sessions, Passport needs to be able to
-//   serialize users into and deserialize users out of the session.  Typically,
-//   this will be as simple as storing the user ID when serializing, and finding
-//   the user by ID when deserializing.  However, since this example does not
-//   have a database of user records, the complete Google profile is
-//   serialized and deserialized.
-passport.serializeUser(function (user, done) {
-  done(null, user);
-});
-
-passport.deserializeUser(function (obj, done) {
-  done(null, obj);
-});
-
-
-// Use the GoogleStrategy within Passport.
-//   Strategies in Passport require a `verify` function, which accept
-//   credentials (in this case, an accessToken, refreshToken, and Google
-//   profile), and invoke a callback with a user object.
-passport.use(new GoogleStrategy({
-  clientID: GOOGLE_CLIENT_ID,
-  clientSecret: GOOGLE_CLIENT_SECRET,
-  //NOTE :
-  //Carefull ! and avoid usage of Private IP, otherwise you will get the device_id device_name issue for Private IP during authentication
-  //The workaround is to set up thru the google cloud console a fully qualified domain name such as http://mydomain:3000/
-  //then edit your /etc/hosts local file to point on your private IP.
-  //Also both sign-in button + callbackURL has to be share the same url, otherwise two cookies will be created and lead to lost your session
-  //if you use it.
-  callbackURL: 'http://localhost:3000/auth/google/callback',
-  passReqToCallback: true,
-},
-function (request, accessToken, refreshToken, profile, done) {
-  // asynchronous verification, for effect...
-  process.nextTick(function () {
-    // To keep the example simple, the user's Google profile is returned to
-    // represent the logged-in user.  In a typical application, you would want
-    // to associate the Google account with a user record in your database,
-    // and return that user instead.
-    return done(null, profile);
-  });
-}));
-
-// configure Express
-app.set('views', `${__dirname}/views`);
-app.set('view engine', 'ejs');
-app.use(express.static(`${__dirname}/public`));
-app.use(cookieParser());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({
-  extended: true,
-}));
-app.use(session({
-  secret: 'cookie_secret',
-  name: 'kaas',
-  store: new RedisStore({
-    host: '127.0.0.1',
-    port: 6379,
-  }),
-  proxy: true,
+app.use(Session({
+  secret: CONFIG.client_secret,
   resave: true,
   saveUninitialized: true,
 }));
-app.use(passport.initialize());
-app.use(passport.session());
 
-
-// Simple route middleware to ensure user is authenticated.
-//   Use this route middleware on any resource that needs to be protected.  If
-//   the request is authenticated (typically via a persistent login session),
-//   the request will proceed.  Otherwise, the user will be redirected to the
-//   login page.
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.redirect('/login');
+function getOAuthClient() {
+  return new OAuth2(ClientId, ClientSecret, RedirectionUrl);
 }
 
+function getAuthUrl() {
+  const oauth2Client = getOAuthClient();
+  // generate a url that asks permissions for Google+ and Google Calendar scopes
+  const scopes = [
+    'https://www.googleapis.com/auth/plus.me',
+  ];
 
-app.get('/', function (req, res) {
-  res.render('index', { user: req.user });
+  const url = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: scopes, // If you only need one scope you can pass it as string
+  });
+
+  return url;
+}
+
+app.use('/oauthCallback', function (req, res) {
+  const oauth2Client = getOAuthClient();
+  const session = req.session;
+  const code = req.query.code;
+  oauth2Client.getToken(code, function (err, tokens) {
+    // Now tokens contains an access_token and an optional refresh_token. Save them.
+    if (!err) {
+      oauth2Client.setCredentials(tokens);
+      session.tokens = tokens;
+      res.send(`
+            <h3>Login successful!!</h3>
+            <a href="/details">Go to details page<;/a>
+        `);
+    } else {
+      res.send(`
+            <h3>Login failed!!</h3>
+        `);
+    }
+  });
 });
 
-app.get('/account', ensureAuthenticated, function (req, res) {
-  res.render('account', { user: req.user });
+app.use('/details', function (err, req, res) {
+  if(err){
+    res.send(err);
+  }
+  const oauth2Client = getOAuthClient();
+  oauth2Client.setCredentials(req.session.tokens);
+
+  const p = new Promise(function (resolve, reject) {
+    plus.people.get({ userId: 'me', auth: oauth2Client }, function (err, response) {
+      resolve(response || err);
+    });
+  }).then(function (data) {
+    res.send(`
+            <img src=${data.image.url} />
+            <h3>Hello ${data.displayName}</h3>
+        `);
+  });
 });
 
-app.get('/login', function (req, res) {
-  res.render('login', { user: req.user });
+app.use('/', function (req, res) {
+  const url = getAuthUrl();
+  res.send(`
+        <h1>Authentication using google oAuth</h1>
+        <a href=${url}>Login</a>
+    `);
 });
 
-// GET /auth/google
-//   Use passport.authenticate() as route middleware to authenticate the
-//   request.  The first step in Google authentication will involve
-//   redirecting the user to google.com.  After authorization, Google
-//   will redirect the user back to this application at /auth/google/callback
-app.get('/auth/google', passport.authenticate('google', {
-  scope: [
-    'https://www.googleapis.com/auth/plus.login',
-    'https://www.googleapis.com/auth/plus.profile.emails.read',
-  ],
-}));
 
-// GET /auth/google/callback
-//   Use passport.authenticate() as route middleware to authenticate the
-//   request.  If authentication fails, the user will be redirected back to the
-//   login page.  Otherwise, the primary route function function will be called,
-//   which, in this example, will redirect the user to the home page.
-app.get('/auth/google/callback',
-  passport.authenticate('google', {
-    successRedirect: '/',
-    failureRedirect: '/login',
-  }));
-
-app.get('/logout', function (req, res) {
-  req.logout();
-  res.redirect('/');
+const port = 1234;
+const server = http.createServer(app);
+server.listen(port);
+server.on('listening', function () {
+  console.log(`listening to ${port}`);
 });
-
-server.listen(3000);
-
