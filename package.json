@@ -8,6 +8,17 @@
   },
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "body-parser": "~1.15.1",
+    "connect-redis": "^3.3.0",
+    "cookie-parser": "~1.4.3",
+    "ejs": ">= 0.0.0",
+    "express": ">= 0.0.0",
+    "express-session": "^1.15.3",
+    "mongoose": "^4.10.4",
+    "passport": ">= 0.0.0",
+    "passport-google-oauth2": ">= 0.0.0"
+  },
   "devDependencies": {
     "babel-eslint": "^7.2.3",
     "eslint": "^4.0.0",
