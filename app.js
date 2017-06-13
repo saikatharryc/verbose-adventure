@@ -11,7 +11,7 @@ const googleAuth = require('google-auth-library');
 const CONFIG = require('./client_secret.json');
 
 const plus = google.plus('v1');
-//const OAuth2 = google.auth.OAuth2;
+
 const ClientId = CONFIG.client_id;
 const ClientSecret = CONFIG.client_secret;
 const RedirectionUrl = 'http://localhost:1234/oauthCallback';
@@ -20,7 +20,7 @@ const app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.engine('html', swig.renderFile);
-app.set('view engine', 'html')
+app.set('view engine', 'html');
 
 app.use(Session({
   secret: CONFIG.client_secret,
@@ -70,7 +70,8 @@ app.use('/oauthCallback', function (req, res) {
   });
 });
 
-app.use('/message', function (req, res) {
+app.get('/messages/:token', function (req, res) {
+  const token = req.params.token || 0;
   const oauth2Client = getOAuthClient();
   oauth2Client.setCredentials(req.session.tokens);
 
@@ -80,6 +81,7 @@ app.use('/message', function (req, res) {
     userId: 'me',
     q: 'newer_than:31d',
     auth: oauth2Client,
+    pageToken: token,
   }, function (err, response) {
     if (err) {
       console.log(err);
@@ -90,9 +92,10 @@ app.use('/message', function (req, res) {
   });
 });
 
-app.use('/thread/:messageid', function (req, res) {
+
+app.get('/message/:messageid', function (req, res) {
   const msgId = req.params.messageid;
-  console.log({hi: msgId});
+  console.log({ hi: msgId });
   const oauth2Client = getOAuthClient();
   oauth2Client.setCredentials(req.session.tokens);
 
@@ -109,6 +112,47 @@ app.use('/thread/:messageid', function (req, res) {
     }
     console.log(response);
     res.send(response);
+  });
+});
+
+app.get('/thread/:threadid', function (req, res) {
+  const thdId = req.params.threadid;
+  const oauth2Client = getOAuthClient();
+  oauth2Client.setCredentials(req.session.tokens);
+
+  const gmail = google.gmail('v1');
+
+  gmail.users.threads.get({
+    id: thdId,
+    userId: 'me',
+    auth: oauth2Client,
+  }, function (err, response) {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    console.log(response);
+    res.send(response);
+  });
+});
+
+app.get('/result/:query', function (req, res) {
+  const query = req.params.query;
+  const oauth2Client = getOAuthClient();
+  oauth2Client.setCredentials(req.session.tokens);
+  const gmail = google.gmail('v1');
+
+  gmail.users.messages.list({
+    userId: 'me',
+    q: `subject:${query} newer_than:31d`,
+    auth: oauth2Client,
+  }, function (err, response) {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    console.log(response);
+    res.send(response.messages);
   });
 });
 
