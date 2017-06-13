@@ -2,10 +2,11 @@ const http = require('http');
 const express = require('express');
 const Session = require('express-session');
 const google = require('googleapis');
+const googleAuth = require('google-auth-library');
 const CONFIG = require('./client_secret.json');
 
 const plus = google.plus('v1');
-const OAuth2 = google.auth.OAuth2;
+//const OAuth2 = google.auth.OAuth2;
 const ClientId = CONFIG.client_id;
 const ClientSecret = CONFIG.client_secret;
 const RedirectionUrl = 'http://localhost:1234/oauthCallback';
@@ -18,7 +19,8 @@ app.use(Session({
 }));
 
 function getOAuthClient() {
-  return new OAuth2(ClientId, ClientSecret, RedirectionUrl);
+  const auth = new googleAuth();
+  return new auth.OAuth2(ClientId, ClientSecret, RedirectionUrl);
 }
 
 function getAuthUrl() {
@@ -26,6 +28,7 @@ function getAuthUrl() {
   // generate a url that asks permissions for Google+ and Google Calendar scopes
   const scopes = [
     'https://www.googleapis.com/auth/plus.me',
+    'https://www.googleapis.com/auth/gmail.readonly',
   ];
 
   const url = oauth2Client.generateAuthUrl({
@@ -57,22 +60,22 @@ app.use('/oauthCallback', function (req, res) {
   });
 });
 
-app.use('/details', function (err, req, res) {
-  if(err){
-    res.send(err);
-  }
+app.use('/details', function (req, res) {
   const oauth2Client = getOAuthClient();
   oauth2Client.setCredentials(req.session.tokens);
 
-  const p = new Promise(function (resolve, reject) {
-    plus.people.get({ userId: 'me', auth: oauth2Client }, function (err, response) {
-      resolve(response || err);
-    });
-  }).then(function (data) {
-    res.send(`
-            <img src=${data.image.url} />
-            <h3>Hello ${data.displayName}</h3>
-        `);
+  const gmail = google.gmail('v1');
+  gmail.users.messages.list({
+    userId: 'me',
+    q: 'newer_than:31d',
+    auth: oauth2Client,
+  }, function (err, response) {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    console.log(response);
+    res.send(response);
   });
 });
 
