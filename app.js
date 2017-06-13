@@ -6,14 +6,15 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const RedisStore = require('connect-redis')(session);
 const GoogleStrategy = require('passport-google-oauth2').Strategy;
+const CONFIG = require('./client_secret.json');
 
 const app = express();
 
 const server = require('http').createServer(app);
 // API Access link for creating client ID and secret:
 // https://code.google.com/apis/console/
-const GOOGLE_CLIENT_ID = '---CLIENT ID---';
-const GOOGLE_CLIENT_SECRET = '---CLIENT SECRET---';
+const GOOGLE_CLIENT_ID = CONFIG.client_id;
+const GOOGLE_CLIENT_SECRET = CONFIG.client_secret;
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
