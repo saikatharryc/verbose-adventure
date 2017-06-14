@@ -15,7 +15,7 @@ const ClientSecret = CONFIG.client_secret;
 const RedirectionUrl = 'http://localhost:1234/oauthCallback';
 
 const app = express();
-var accessToken;
+let accessToken;
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -69,16 +69,15 @@ app.use('/oauthCallback', function (req, res) {
 });
 
 app.get('/messages', function (req, res) {
-console.log(accessToken);
   const option = {
     method: 'GET',
-    url: `${CONFIG.api_base}/gmail/v1/users/me/messages`,
-     headers: {
-        'content-type': 'application/x-www-form-urlencoded',
-        'Authorization': `Bearer ${accessToken}`,
-      },
+    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:1d"`,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'Authorization': `Bearer ${accessToken}`,
+    },
   };
-request(option, function (error, response, body) {
+  request(option, function (error, response, body) {
     if (error) {
       console.log(error);
       res.send(error);
@@ -86,36 +85,78 @@ request(option, function (error, response, body) {
       res.send(body);
     }
   });
-
 });
 
 
+app.get('/messaging', function (req, res) {
+  const option = {
+    method: 'POST',
+    url: `${CONFIG.api_base}/gmail/v1/users/me/messages`,
+    headers: {
+      'content-type': 'multipart/mixed; boundary=batch_foobarbaz',
+      'content-Length': 500,
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  };
+  request(option, function (error, response, body) {
+    if (error) {
+      console.log(error);
+      res.send(error);
+    } else {
+      res.send(body);
+    }
+  });
+});
+
+
+
+app.get('/search/:query', function (req, res) {
+  const queries = req.params.query;
+  const option = {
+    method: 'GET',
+    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="subject: ${queries}"`,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  };
+  request(option, function (error, response, body) {
+    if (error) {
+      console.log(error);
+      res.send(error);
+    } else {
+      res.send(body);
+    }
+  });
+});
+
 app.get('/message/:messageid', function (req, res) {
   const msgId = req.params.messageid;
-  console.log({ hi: msgId });
-  const oauth2Client = getOAuthClient();
-  oauth2Client.setCredentials(req.session.tokens);
-
-  const gmail = google.gmail('v1');
-
-  gmail.users.messages.get({
-    id: msgId,
-    userId: 'me',
-    auth: oauth2Client,
-  }, function (err, response) {
-    if (err) {
-      console.log(err);
-      return;
+  console.log(accessToken);
+  const option = {
+    method: 'GET',
+    url: `${CONFIG.api_base}/gmail/v1/users/me/messages/${msgId}`,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  };
+  request(option, function (error, response, body) {
+    if (error) {
+      console.log(error);
+      res.send(error);
+    } else {
+      res.send(body);
     }
-    console.log(response);
-    res.send(response);
   });
 });
 
 app.get('/thread/:threadid', function (req, res) {
   const thdId = req.params.threadid;
   const oauth2Client = getOAuthClient();
-  oauth2Client.setCredentials(req.session.tokens);
+  oauth2Client.setCredent;
+
+  ials(req.session.tokens);
 
   const gmail = google.gmail('v1');
 
