@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 
-// const adminSchema = require('./Admins');
-// const buyerSchema = require('./Buyers');
-// const lenderSchema = require('./Lenders');
+const threadSchema = require('./Thread');
 
 /**
  * This file should import all the schema and register a mongoose model
@@ -12,7 +10,5 @@ const mongoose = require('mongoose');
 
 
 module.exports = {
-  // Admin: mongoose.model('Admin', adminSchema),
-  // Buyer: mongoose.model('Buyer', buyerSchema),
-  // Lender: mongoose.model('Lender', lenderSchema),
+  Thread: mongoose.model('Thread', threadSchema),
 };
