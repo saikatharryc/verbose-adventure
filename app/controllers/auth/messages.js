@@ -32,6 +32,7 @@ function messages(req, res, next) {
   }
 }
 
+
 function threadById(req, res, next) {
   thrdId = req.params.id;
   if (!access.accessToken) {
@@ -39,7 +40,7 @@ function threadById(req, res, next) {
   } else {
     const option = {
       method: 'GET',
-      url: `${CONFIG.api_base}/gmail/v1/users/me/threads/${thrdId}`,
+      url: `${CONFIG.api_base}/gmail/v1/users/me/threads/${thrdId}?format=minimal`,
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
         'Authorization': `Bearer ${access.accessToken}`,
