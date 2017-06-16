@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const swig = require('swig');
 const routes = require('./app/controllers');
 const db_connect = require('./lib/db_connect')();
+const  access = require('./app/controllers/auth/authenticate');
 
 const app = express();
 
@@ -36,7 +37,11 @@ app.set('view engine', 'html');
 
 app.use('/api/v1', routes);
 app.use('/', function (req, res, next) {
+  if (!access.accessToken) {
+    res.redirect('/api/v1/auth/oauth2/login');
+  }else{
   res.render('index');
+}
 });
 
 
