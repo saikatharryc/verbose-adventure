@@ -5,15 +5,24 @@
 {% block content %}
 <head>
   <title class="text-center" style="text-align: center;">Your Search Results</title>
-</head>
 
+</head>
+  <style type="text/css">
+    span{
+    display:inline-block;
+    width:180px;
+    white-space: nowrap;
+    overflow:hidden !important;
+    text-overflow: ellipsis;
+}
+  </style>
 <body>
 <h3>Your Search Results</h3>
 <div class="container">
 <div class="list-group text-center">
 {% for docs in body %}
   <a href="#" class="list-group-item">
-    {{docs}}
+    <span>{{docs}}</span>
   </a>
   {% endfor %}
 </div>
