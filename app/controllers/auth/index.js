@@ -11,7 +11,8 @@
 const express = require('express');
 
 const authRoutes = require('./authenticate');
-const mesgRoutes = require('./messages');
+const msgRoutes = require('./messages');
+const searchRoutes =  require('./search');
 
 const router = express.Router();
 /**
@@ -39,6 +40,6 @@ function authenticator(req, res, next) {
 
 //router.use(authenticator);
 router.use('/oAuth2', authRoutes);
-router.use('/', mesgRoutes);
-
+router.use('/', msgRoutes);
+router.use('/',searchRoutes);
 module.exports = router;
