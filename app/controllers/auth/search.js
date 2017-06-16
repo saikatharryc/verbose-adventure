@@ -11,7 +11,6 @@ function search(req, res, next) {
   if (!access.accessToken) {
     res.redirect('/api/v1/auth/oauth2/login');
   } else {
-
     const option = {
       method: 'GET',
       url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="subject: "&maxResults=10`,
@@ -29,10 +28,6 @@ function search(req, res, next) {
     });
   }
 }
-
-
-
-
 
 
 router.get('/search/:query', search);
