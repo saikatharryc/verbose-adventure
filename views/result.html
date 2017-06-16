@@ -10,7 +10,7 @@
   <style type="text/css">
     span{
     display:inline-block;
-    width:180px;
+    width:450px;
     white-space: nowrap;
     overflow:hidden !important;
     text-overflow: ellipsis;
@@ -21,8 +21,8 @@
 <div class="container">
 <div class="list-group text-center">
 {% for docs in body %}
-  <a href="/api/v1/auth/message/{{docs}}" class="list-group-item">
-    <span>{{docs}}</span>
+  <a href="/api/v1/auth/message/{{docs.messageId}}" class="list-group-item">
+    <span>{{docs.snippet}}</span>
   </a>
   {% endfor %}
 </div>
