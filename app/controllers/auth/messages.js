@@ -38,9 +38,21 @@ function messageById(req, res, next) {
       }
       //res.send(body);
       body = JSON.parse(body);
+      /**
+       * Decoding the encoded string
+       *
+       * @param      {string}  string  The string
+       * @return     {Object}  { description_of_the_return_value }
+       */
       function decode(string) {
         return decodeURIComponent(escape(atob(string.replace(/\-/g, '+').replace(/\_/g, '/'))));
       }
+      /**
+       * Gets the text by processing decoded string.
+       *
+       * @param      {Object}             body    The body
+       * @return     {(Function|string)}  The text.
+       */
       function getText(body) {
         let result = '';
   // In e.g. a plain text message, the payload is the only part.
