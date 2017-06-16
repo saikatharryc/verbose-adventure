@@ -73,66 +73,62 @@ function messageById(req, res, next) {
  *
  */
 function messages() {
-  //console.log(access.accessToken);
-  if (!access.accessToken) {
-    res.redirect('/api/v1/auth/oauth2/login');
-  } else {
-    const option = {
-      method: 'GET',
-      url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:31d"&maxResults=300`,
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded',
-        'Authorization': `Bearer ${access.accessToken}`,
-      },
-    };
-    request(option, function (error, response, body) {
-      if (error) {
-        console.log(error);
-      } else if (JSON.parse(body).nextPageToken) {
-        store = JSON.parse(body).messages;
+  const option = {
+    method: 'GET',
+    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:31d"&maxResults=300`,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'Authorization': `Bearer ${access.accessToken}`,
+    },
+  };
+  request(option, function (error, response, body) {
+    if (error) {
+      console.log(error);
+    } else if (JSON.parse(body).nextPageToken) {
+      store = JSON.parse(body).messages;
         //pass to the nextPageSystem() again if nextPageToken is available
-        nextPageSystem(JSON.parse(body).nextPageToken);
-      } else {
-        const messages = JSON.parse(body).messages;
-        threadIds = messages.map(function (a) { return a.threadId; });
+      nextPageSystem(JSON.parse(body).nextPageToken);
+    } else {
+      const messages = JSON.parse(body).messages;
+      threadIds = messages.map(function (a) { return a.threadId; });
 
         //console.log(threadIds.length);
-        return threadIds;
-      }
-    });
-  }
+      return threadIds;
+    }
+  });
+}
 
 /**
  * Takes nextPageToken as input ,process and concats the result with the previous.
  *
  * @param      {string}  nextPageToken  The next page token
  */
-  function nextPageSystem(nextPageToken) {
-    const option = {
-      method: 'GET',
-      url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:31d"&maxResults=300&pageToken=${nextPageToken}`,
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded',
-        'Authorization': `Bearer ${access.accessToken}`,
-      },
-    };
+function nextPageSystem(nextPageToken) {
+  const option = {
+    method: 'GET',
+    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:31d"&maxResults=300&pageToken=${nextPageToken}`,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'Authorization': `Bearer ${access.accessToken}`,
+    },
+  };
 
 
-    request(option, function (error, response, body) {
-      if (error) {
-        console.log(error);
-      } else if (JSON.parse(body).nextPageToken) {
-        store = store.concat(JSON.parse(body).messages);
-        nextPageSystem(JSON.parse(body).nextPageToken);
-      } else {
-        store = store.concat(JSON.parse(body).messages);
-        console.log({ count: store.length });
-        threadIds = store.map(function (a) { return a.threadId; });
-        return threadIds;
-      }
-    });
-  }
+  request(option, function (error, response, body) {
+    if (error) {
+      console.log(error);
+    } else if (JSON.parse(body).nextPageToken) {
+      store = store.concat(JSON.parse(body).messages);
+      nextPageSystem(JSON.parse(body).nextPageToken);
+    } else {
+      store = store.concat(JSON.parse(body).messages);
+      console.log({ count: store.length });
+      threadIds = store.map(function (a) { return a.threadId; });
+      return threadIds;
+    }
+  });
 }
+
 
 /**
  * Get thread Details By ID
