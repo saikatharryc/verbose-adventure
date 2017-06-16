@@ -4,11 +4,20 @@
 
 {% block content %}
 <head>
-  <title class="text-center">Your Search Results</title>
+  <title class="text-center" style="text-align: center;">Your Search Results</title>
 </head>
+
 <body>
 <h3>Your Search Results</h3>
-{{body}}
+<div class="container">
+<div class="list-group text-center">
+{% for docs in body %}
+  <a href="#" class="list-group-item">
+    {{docs}}
+  </a>
+  {% endfor %}
+</div>
+</div>
 </body>
 </html>
 {% endblock %}
