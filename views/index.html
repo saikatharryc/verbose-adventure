@@ -4,15 +4,15 @@
 
 {% block content %}
 <head>
-  <title class="text-center" style="text-align: center;">Your Search Results</title>
+  <title >Your Search Results</title>
 
 </head>
 
   </style>
 <body>
-<h3>Your Search Results</h3>
+<h3 class="text-center" style="text-align: center;">Your Search Results</h3>
 <div class="container">
-<form method="get" action="/api/v1/auth/search/{{docs.query}}">
+<form method="get" action="/api/v1/auth/search/{{docs.query}}" class="text-center" style="text-align: center;">
       <div class="form-group">
         <label>Enter The Keyword To search withing Mail</label>
 
