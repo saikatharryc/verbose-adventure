@@ -21,7 +21,7 @@
 <div class="container">
 <div class="list-group text-center">
 {% for docs in body %}
-  <a href="#" class="list-group-item">
+  <a href="/api/v1/auth/message/{{docs}}" class="list-group-item">
     <span>{{docs}}</span>
   </a>
   {% endfor %}

@@ -7,7 +7,7 @@ const router = express.Router();
 
 
 function search(req, res, next) {
-  const querySub = req.params.query;
+  const querySub = req.query.query;
   if (!access.accessToken) {
     res.redirect('/api/v1/auth/oauth2/login');
   } else {
@@ -28,13 +28,13 @@ function search(req, res, next) {
       messageIds = messageBody.map(function (a) { return a.id; });
       res.render(
         'result',
-        {body : messageIds }
+        { body: messageIds }
         );
     });
   }
 }
 
 
-router.get('/search/:query', search);
+router.get('/search', search);
 
 module.exports = router;

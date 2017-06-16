@@ -11,6 +11,31 @@ let store;
 const samary = [];
 
 
+function messageById(req, res, next) {
+  const queryIdreq = req.params.id;
+  if (!access.accessToken) {
+    res.redirect('/api/v1/auth/oauth2/login');
+  } else {
+    const option = {
+      method: 'GET',
+      url: `${CONFIG.api_base}/gmail/v1/users/me/messages/${queryIdreq}?format=minimal`,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'Authorization': `Bearer ${access.accessToken}`,
+      },
+    };
+    request(option, function (error, response, body) {
+      if (error) {
+        console.log(error);
+        res.send(error);
+      }
+      const messageBody = JSON.parse(body);
+      const dt = Date(messageBody.internalDate);
+      res.render('message', { message: messageBody.snippet, date: dt });
+    });
+  }
+}
+
 /**
  * List all the threadIds
  *
@@ -19,7 +44,7 @@ const samary = [];
  * @param      {Function}  next    The next
  */
 function messages(req, res, next) {
-  console.log(access.accessToken);
+  //console.log(access.accessToken);
   if (!access.accessToken) {
     res.redirect('/api/v1/auth/oauth2/login');
   } else {
@@ -114,7 +139,10 @@ function threadById(thrdId, callback) {
  * @param      {Function}  next    The next
  */
 function babelThreads(req, res, next) {
-  count = 0;
+  if (!threadIds) {
+    messages();
+  }
+  let count = 0;
   async.each(threadIds, function (data) {
     threadById(data, function (error, result) {
       if (error) {
@@ -137,7 +165,7 @@ function babelThreads(req, res, next) {
   });
 }
 
-
+router.get('/message/:id',messageById);
 router.get('/messages', messages);
 router.get('/thread', babelThreads);
 

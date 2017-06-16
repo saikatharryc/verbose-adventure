@@ -35,6 +35,9 @@ app.set('view engine', 'html');
 ********************************************************/
 
 app.use('/api/v1', routes);
+app.use('/', function (req, res, next) {
+  res.render('index');
+});
 
 
 /*******************************************************
@@ -48,6 +51,7 @@ app.use(function (req, res, next) {
   err.status = 404;
   next(err);
 });
+
 
 // development error handler
 // will print stacktrace
