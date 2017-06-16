@@ -11,6 +11,44 @@ let threadIds;
 let store;
 const samary = [];
 
+
+   /**
+       * Decoding the encoded string
+       *
+       * @param      {string}  string  The string
+       * @return     {Object}  { description_of_the_return_value }
+       */
+function decode(string) {
+  return decodeURIComponent(escape(atob(string.replace(/\-/g, '+').replace(/\_/g, '/'))));
+}
+
+  /**
+       * Gets the text by processing decoded string.
+       *
+       * @param      {Object}             body    The body
+       * @return     {(Function|string)}  The text.
+       */
+function getText(body) {
+  let result = '';
+  // In e.g. a plain text message, the payload is the only part.
+  let parts = [body.payload];
+
+  while (parts.length) {
+    const part = parts.shift();
+    if (part.parts) {
+      parts = parts.concat(part.parts);
+    }
+    if (part.mimeType === 'text/plain') {
+      // Continue to look for a 'text/html' part.
+      result = decode(part.body.data);
+    } else if (part.mimeType === 'text/html') {
+      // 'text/html' part found. No need to continue.
+      result = decode(part.body.data);
+      break;
+    }
+  }
+  return result;
+}
 /**
  * Fetch Message By Id
  *
@@ -38,42 +76,7 @@ function messageById(req, res, next) {
       }
       //res.send(body);
       body = JSON.parse(body);
-      /**
-       * Decoding the encoded string
-       *
-       * @param      {string}  string  The string
-       * @return     {Object}  { description_of_the_return_value }
-       */
-      function decode(string) {
-        return decodeURIComponent(escape(atob(string.replace(/\-/g, '+').replace(/\_/g, '/'))));
-      }
-      /**
-       * Gets the text by processing decoded string.
-       *
-       * @param      {Object}             body    The body
-       * @return     {(Function|string)}  The text.
-       */
-      function getText(body) {
-        let result = '';
-  // In e.g. a plain text message, the payload is the only part.
-        let parts = [body.payload];
 
-        while (parts.length) {
-          const part = parts.shift();
-          if (part.parts) {
-            parts = parts.concat(part.parts);
-          }
-          if (part.mimeType === 'text/plain') {
-      // Continue to look for a 'text/html' part.
-            result = decode(part.body.data);
-          } else if (part.mimeType === 'text/html') {
-      // 'text/html' part found. No need to continue.
-            result = decode(part.body.data);
-            break;
-          }
-        }
-        return result;
-      }
       const text = getText(body);
       res.send(text);
     });
@@ -87,7 +90,7 @@ function messageById(req, res, next) {
 function messages() {
   const option = {
     method: 'GET',
-    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:31d"&maxResults=300`,
+    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:1d"&maxResults=300`,
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
       'Authorization': `Bearer ${access.accessToken}`,
@@ -118,7 +121,7 @@ function messages() {
 function nextPageSystem(nextPageToken) {
   const option = {
     method: 'GET',
-    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:31d"&maxResults=300&pageToken=${nextPageToken}`,
+    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:1d"&maxResults=300&pageToken=${nextPageToken}`,
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
       'Authorization': `Bearer ${access.accessToken}`,
@@ -151,7 +154,7 @@ function nextPageSystem(nextPageToken) {
 function threadById(thrdId, callback) {
   const option = {
     method: 'GET',
-    url: `${CONFIG.api_base}/gmail/v1/users/me/threads/${thrdId}?format=minimal`,
+    url: `${CONFIG.api_base}/gmail/v1/users/me/threads/${thrdId}`,
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
       'Authorization': `Bearer ${access.accessToken}`,
@@ -161,8 +164,12 @@ function threadById(thrdId, callback) {
     if (error) {
       console.log(error);
     } else {
-      const thread = JSON.parse(body);
-      callback(null, thread);
+      body = JSON.parse(body);
+      // const text = getText(body);
+
+      // const thread = { threadId: body.id, message: text };
+
+      callback(null, body);
     }
   });
 }
@@ -192,12 +199,13 @@ function babelThreads(req, res, next) {
       count++;
       // Stop and Start processing when the element of an array processed, pyshed to summary.
       if (count === threadIds.length) {
-        threadLib.saveThread(samary, function (errorInSave, savedThreadInstance) {
-          if (errorInSave) {
-            res.send(errorInSave);
-          }
-          res.send('all data saved');
-        });
+        // threadLib.saveThread(samary, function (errorInSave, savedThreadInstance) {
+        //   if (errorInSave) {
+        //     res.send(errorInSave);
+        //   }
+        //   res.send('all data saved');
+        // });
+        res.send(summary);
       }
     });
   });
