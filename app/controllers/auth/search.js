@@ -24,7 +24,12 @@ function search(req, res, next) {
         console.log(error);
         res.send(error);
       }
-      res.send(body);
+      const messageBody = JSON.parse(body).messages;
+      messageIds = messageBody.map(function (a) { return a.id; });
+      res.render(
+        'result',
+        {body : messageIds }
+        );
     });
   }
 }
