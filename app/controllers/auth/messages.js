@@ -39,11 +39,8 @@ function messageById(req, res, next) {
 /**
  * List all the threadIds
  *
- * @param      {object}    req     The request
- * @param      {object}    res     The resource
- * @param      {Function}  next    The next
  */
-function messages(req, res, next) {
+function messages() {
   //console.log(access.accessToken);
   if (!access.accessToken) {
     res.redirect('/api/v1/auth/oauth2/login');
@@ -59,7 +56,6 @@ function messages(req, res, next) {
     request(option, function (error, response, body) {
       if (error) {
         console.log(error);
-        res.send(error);
       } else if (JSON.parse(body).nextPageToken) {
         store = JSON.parse(body).messages;
         //pass to the nextPageSystem() again if nextPageToken is available
@@ -69,7 +65,7 @@ function messages(req, res, next) {
         threadIds = messages.map(function (a) { return a.threadId; });
 
         //console.log(threadIds.length);
-        res.send(threadIds);
+        return threadIds;
       }
     });
   }
@@ -100,7 +96,7 @@ function messages(req, res, next) {
         store = store.concat(JSON.parse(body).messages);
         console.log({ count: store.length });
         threadIds = store.map(function (a) { return a.threadId; });
-        res.send(threadIds);
+        return threadIds;
       }
     });
   }
@@ -139,7 +135,9 @@ function threadById(thrdId, callback) {
  * @param      {Function}  next    The next
  */
 function babelThreads(req, res, next) {
-  if (!threadIds) {
+  if (!access.accessToken) {
+    res.redirect('/api/v1/auth/oauth2/login');
+  } else if (!threadIds) {
     messages();
   }
   let count = 0;
@@ -165,7 +163,7 @@ function babelThreads(req, res, next) {
   });
 }
 
-router.get('/message/:id',messageById);
+router.get('/message/:id', messageById);
 router.get('/messages', messages);
 router.get('/thread', babelThreads);
 
