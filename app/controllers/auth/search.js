@@ -13,7 +13,7 @@ function search(req, res, next) {
   } else {
     const option = {
       method: 'GET',
-      url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="subject: "&maxResults=10`,
+      url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="subject: `+querySub+`"&maxResults=10`,
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
         'Authorization': `Bearer ${access.accessToken}`,

@@ -4,13 +4,20 @@ const CONFIG = require('../../../config')();
 const access = require('./authenticate');
 const threadLib = require('../../../lib/messages/thread_store');
 const async = require('async');
+const atob = require('atob');
 
 const router = express.Router();
 let threadIds;
 let store;
 const samary = [];
 
-
+/**
+ * Fetch Message By Id
+ *
+ * @param      {Object}    req     The request
+ * @param      {Object}    res     The resource
+ * @param      {Function}  next    The next
+ */
 function messageById(req, res, next) {
   const queryIdreq = req.params.id;
   if (!access.accessToken) {
@@ -18,7 +25,7 @@ function messageById(req, res, next) {
   } else {
     const option = {
       method: 'GET',
-      url: `${CONFIG.api_base}/gmail/v1/users/me/messages/${queryIdreq}?format=minimal`,
+      url: `${CONFIG.api_base}/gmail/v1/users/me/messages/${queryIdreq}`,
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
         'Authorization': `Bearer ${access.accessToken}`,
@@ -29,9 +36,34 @@ function messageById(req, res, next) {
         console.log(error);
         res.send(error);
       }
-      const messageBody = JSON.parse(body);
-      const dt = Date(messageBody.internalDate);
-      res.render('message', { message: messageBody.snippet, date: dt });
+      //res.send(body);
+      body = JSON.parse(body);
+      function decode(string) {
+        return decodeURIComponent(escape(atob(string.replace(/\-/g, '+').replace(/\_/g, '/'))));
+      }
+      function getText(body) {
+        let result = '';
+  // In e.g. a plain text message, the payload is the only part.
+        let parts = [body.payload];
+
+        while (parts.length) {
+          const part = parts.shift();
+          if (part.parts) {
+            parts = parts.concat(part.parts);
+          }
+          if (part.mimeType === 'text/plain') {
+      // Continue to look for a 'text/html' part.
+            result = decode(part.body.data);
+          } else if (part.mimeType === 'text/html') {
+      // 'text/html' part found. No need to continue.
+            result = decode(part.body.data);
+            break;
+          }
+        }
+        return result;
+      }
+      const text = getText(body);
+      res.send(text);
     });
   }
 }
