@@ -4,6 +4,13 @@ const request = require('request');
 const CONFIG = require('../../../config')();
 const router = express.Router();
 
+/**
+ * Gets the auth url.
+ *
+ * @param      {object}    req     The request
+ * @param      {object}    res     The resource
+ * @param      {Function}  next    The next
+ */
 function getAuthUrl(req, res, next) {
   // generate a url that asks permissions for Google+ and Google Calendar scopes
   // The scope will be delimited by space.
@@ -15,6 +22,13 @@ function getAuthUrl(req, res, next) {
   res.render('login',{url});
 }
 
+/**
+ * Google Login Callback Handler
+ *
+ * @param      {Object}    req     The request
+ * @param      {Object}    res     The resource
+ * @param      {Function}  next    The next
+ */
 function catchBack(req, res, next) {
   const code = req.query.code;
   const option = {

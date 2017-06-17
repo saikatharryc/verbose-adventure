@@ -36,6 +36,10 @@ app.set('view engine', 'html');
 ********************************************************/
 
 app.use('/api/v1', routes);
+
+/**
+ * `/` Throw The Landing Page [Index.html]
+ */
 app.use('/', function (req, res, next) {
   if (!access.accessToken) {
     res.redirect('/api/v1/auth/oauth2/login');

@@ -11,7 +11,6 @@ let threadIds;
 let store;
 const samary = [];
 
-
    /**
        * Decoding the encoded string
        *
@@ -21,8 +20,6 @@ const samary = [];
 function decode(string) {
   return decodeURIComponent(escape(atob(string.replace(/\-/g, '+').replace(/\_/g, '/'))));
 }
-
-
   /**
        * Gets the text by processing decoded string.
        *
@@ -33,7 +30,6 @@ function getText(body) {
   let result = '';
   // In e.g. a plain text message, the payload is the only part.
   let parts = [body.payload];
-
   while (parts.length) {
     const part = parts.shift();
     if (part.parts) {
@@ -84,7 +80,6 @@ function messageById(req, res, next) {
   }
 }
 
-
 /**
  * Takes nextPageToken as input ,process and concats the result with the previous.
  *
@@ -116,7 +111,6 @@ function nextPageSystem(nextPageToken) {
   });
 }
 
-
 /**
  * Get thread Details By ID
  *
@@ -146,9 +140,7 @@ function threadById(thrdId, callback) {
           result = decode(data.body.data);
         }
       });
-
       const thread = { threadId: JSON.parse(body).id, result };
-
       callback(null, thread);
     }
   });
@@ -164,54 +156,53 @@ function threadById(thrdId, callback) {
 function babelThreads(req, res, next) {
   if (!access.accessToken) {
     res.redirect('/api/v1/auth/oauth2/login');
-  }
-else{
-  const option = {
-    method: 'GET',
-    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:1d"&maxResults=300`,
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded',
-      'Authorization': `Bearer ${access.accessToken}`,
-    },
-  };
-  request(option, function (error, response, body) {
-    if (error) {
-      console.log(error);
-    } else if (JSON.parse(body).nextPageToken) {
-      store = JSON.parse(body).messages;
+  } else {
+    const option = {
+      method: 'GET',
+      url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:1d"&maxResults=300`,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'Authorization': `Bearer ${access.accessToken}`,
+      },
+    };
+    request(option, function (error, response, body) {
+      if (error) {
+        console.log(error);
+      } else if (JSON.parse(body).nextPageToken) {
+        store = JSON.parse(body).messages;
         //pass to the nextPageSystem() again if nextPageToken is available
-      nextPageSystem(JSON.parse(body).nextPageToken);
-    } else {
-      const messages = JSON.parse(body).messages;
-      threadIds = messages.map(function (a) { return a.threadId; });
+        nextPageSystem(JSON.parse(body).nextPageToken);
+      } else {
+        const messages = JSON.parse(body).messages;
+        threadIds = messages.map(function (a) { return a.threadId; });
 
 
-      let count = 0;
-      async.each(threadIds, function (data) {
-        threadById(data, function (error, body) {
-          if (error) {
-            return error;
-          }
-          console.log(count);
+        let count = 0;
+        async.each(threadIds, function (data) {
+          threadById(data, function (error, body) {
+            if (error) {
+              return error;
+            }
+            console.log(count);
 
 
-          samary.push(body);
-          count++;
-      // Stop and Start processing when the element of an array processed, pyshed to summary.
-          if (count === threadIds.length) {
-        threadLib.saveThread(samary, function (errorInSave, savedThreadInstance) {
-          if (errorInSave) {
-            res.send(errorInSave);
-          }
-          res.status(200).json({type:'success',info:'Your Mails Sync finished Successfully.!'});
-        });
+            samary.push(body);
+            count++;
+            //Stop and Start processing when the element of an array processed, pyshed to summary.
+            if (count === threadIds.length) {
+              threadLib.saveThread(samary, function (errorInSave, savedThreadInstance) {
+                if (errorInSave) {
+                  res.send(errorInSave);
+                }
+                res.status(200).json({ type: 'success', info: 'Your Mails Sync finished Successfully.!' });
+              });
             //res.send(samary);
-          }
+            }
+          });
         });
-      });
-    }
-  });
-}
+      }
+    });
+  }
 }
 
 router.get('/message/:id', messageById);
