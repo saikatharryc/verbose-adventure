@@ -22,6 +22,7 @@ function decode(string) {
   return decodeURIComponent(escape(atob(string.replace(/\-/g, '+').replace(/\_/g, '/'))));
 }
 
+
   /**
        * Gets the text by processing decoded string.
        *
@@ -29,6 +30,7 @@ function decode(string) {
        * @return     {(Function|string)}  The text.
        */
 function getText(body) {
+
   let result = '';
   // In e.g. a plain text message, the payload is the only part.
   let parts = [body.payload];
@@ -164,12 +166,20 @@ function threadById(thrdId, callback) {
     if (error) {
       console.log(error);
     } else {
-      body = JSON.parse(body);
-      // const text = getText(body);
+let  result = '';
+        const part = JSON.parse(body).messages[0].payload.parts;
 
-      // const thread = { threadId: body.id, message: text };
+console.log(part);
+  async.each(part, function (data) {
+       if (data.mimeType === 'text/html') {
+       // 'text/html' part found. No need to continue.
+       result = decode(data.body.data);
+     }
+   });
 
-      callback(null, body);
+       const thread = { threadId: JSON.parse(body).id, result };
+
+      callback(null, thread);
     }
   });
 }
@@ -182,20 +192,27 @@ function threadById(thrdId, callback) {
  * @param      {Function}  next    The next
  */
 function babelThreads(req, res, next) {
+
   if (!access.accessToken) {
+
     res.redirect('/api/v1/auth/oauth2/login');
   } else if (!threadIds) {
     messages();
   }
   let count = 0;
   async.each(threadIds, function (data) {
-    threadById(data, function (error, result) {
+    threadById(data, function (error, body) {
       if (error) {
         return error;
       }
       console.log(count);
-      //Concates result and makes an array of all the objects to be saved
-      samary.push(result);
+
+
+
+
+
+
+      samary.push(body);
       count++;
       // Stop and Start processing when the element of an array processed, pyshed to summary.
       if (count === threadIds.length) {
@@ -205,7 +222,7 @@ function babelThreads(req, res, next) {
         //   }
         //   res.send('all data saved');
         // });
-        res.send(summary);
+        res.send(samary);
       }
     });
   });
