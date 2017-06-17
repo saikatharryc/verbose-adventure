@@ -30,7 +30,6 @@ function decode(string) {
        * @return     {(Function|string)}  The text.
        */
 function getText(body) {
-
   let result = '';
   // In e.g. a plain text message, the payload is the only part.
   let parts = [body.payload];
@@ -85,35 +84,6 @@ function messageById(req, res, next) {
   }
 }
 
-/**
- * List all the threadIds
- *
- */
-function messages() {
-  const option = {
-    method: 'GET',
-    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:1d"&maxResults=300`,
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded',
-      'Authorization': `Bearer ${access.accessToken}`,
-    },
-  };
-  request(option, function (error, response, body) {
-    if (error) {
-      console.log(error);
-    } else if (JSON.parse(body).nextPageToken) {
-      store = JSON.parse(body).messages;
-        //pass to the nextPageSystem() again if nextPageToken is available
-      nextPageSystem(JSON.parse(body).nextPageToken);
-    } else {
-      const messages = JSON.parse(body).messages;
-      threadIds = messages.map(function (a) { return a.threadId; });
-
-        //console.log(threadIds.length);
-      return threadIds;
-    }
-  });
-}
 
 /**
  * Takes nextPageToken as input ,process and concats the result with the previous.
@@ -166,18 +136,18 @@ function threadById(thrdId, callback) {
     if (error) {
       console.log(error);
     } else {
-let  result = '';
-        const part = JSON.parse(body).messages[0].payload.parts;
+      let result = '';
+      const part = JSON.parse(body).messages[0].payload.parts;
 
-console.log(part);
-  async.each(part, function (data) {
-       if (data.mimeType === 'text/html') {
+      console.log(part);
+      async.each(part, function (data) {
+        if (data.mimeType === 'text/html') {
        // 'text/html' part found. No need to continue.
-       result = decode(data.body.data);
-     }
-   });
+          result = decode(data.body.data);
+        }
+      });
 
-       const thread = { threadId: JSON.parse(body).id, result };
+      const thread = { threadId: JSON.parse(body).id, result };
 
       callback(null, thread);
     }
@@ -192,44 +162,59 @@ console.log(part);
  * @param      {Function}  next    The next
  */
 function babelThreads(req, res, next) {
-
   if (!access.accessToken) {
-
     res.redirect('/api/v1/auth/oauth2/login');
-  } else if (!threadIds) {
-    messages();
   }
-  let count = 0;
-  async.each(threadIds, function (data) {
-    threadById(data, function (error, body) {
-      if (error) {
-        return error;
-      }
-      console.log(count);
+
+  const option = {
+    method: 'GET',
+    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:1d"&maxResults=300`,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'Authorization': `Bearer ${access.accessToken}`,
+    },
+  };
+  request(option, function (error, response, body) {
+    if (error) {
+      console.log(error);
+    } else if (JSON.parse(body).nextPageToken) {
+      store = JSON.parse(body).messages;
+        //pass to the nextPageSystem() again if nextPageToken is available
+      nextPageSystem(JSON.parse(body).nextPageToken);
+    } else {
+      const messages = JSON.parse(body).messages;
+      threadIds = messages.map(function (a) { return a.threadId; });
 
 
+      let count = 0;
+      async.each(threadIds, function (data) {
+        threadById(data, function (error, body) {
+          if (error) {
+            return error;
+          }
+          console.log(count);
 
 
-
-
-      samary.push(body);
-      count++;
+          samary.push(body);
+          count++;
       // Stop and Start processing when the element of an array processed, pyshed to summary.
-      if (count === threadIds.length) {
+          if (count === threadIds.length) {
         // threadLib.saveThread(samary, function (errorInSave, savedThreadInstance) {
         //   if (errorInSave) {
         //     res.send(errorInSave);
         //   }
         //   res.send('all data saved');
         // });
-        res.send(samary);
-      }
-    });
+            res.send(samary);
+          }
+        });
+      });
+    }
   });
 }
 
 router.get('/message/:id', messageById);
-router.get('/messages', messages);
-router.get('/thread', babelThreads);
+
+router.get('/sync', babelThreads);
 
 module.exports = router;
