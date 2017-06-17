@@ -60,7 +60,9 @@ function search(req, res, next) {
       if (error) {
         console.log(error);
         res.send(error);
-      }
+      }else if(!JSON.parse(body).messages){
+        res.json({type:'not_found',info:'Keyword Doesnot match any message!'})
+      }else{
       const messageBody = JSON.parse(body).messages;
       const messageIds = messageBody.map(function (a) {
         return a.id;
@@ -84,7 +86,9 @@ function search(req, res, next) {
           }
         });
       });
+    }
     });
+
   }
 }
 
