@@ -88,7 +88,7 @@ function messageById(req, res, next) {
 function nextPageSystem(nextPageToken) {
   const option = {
     method: 'GET',
-    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:31d"&maxResults=300&pageToken=${nextPageToken}`,
+    url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:8d"&maxResults=300&pageToken=${nextPageToken}`,
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
       'Authorization': `Bearer ${access.accessToken}`,
@@ -159,7 +159,7 @@ function babelThreads(req, res, next) {
   } else {
     const option = {
       method: 'GET',
-      url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:31d"&maxResults=300`,
+      url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:8d"&maxResults=300`,
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
         'Authorization': `Bearer ${access.accessToken}`,
