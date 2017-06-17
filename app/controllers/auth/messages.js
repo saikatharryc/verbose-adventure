@@ -165,7 +165,7 @@ function babelThreads(req, res, next) {
   if (!access.accessToken) {
     res.redirect('/api/v1/auth/oauth2/login');
   }
-
+else{
   const option = {
     method: 'GET',
     url: `${CONFIG.api_base}/gmail/v1/users/me/messages?q="in: newer_than:1d"&maxResults=300`,
@@ -199,18 +199,19 @@ function babelThreads(req, res, next) {
           count++;
       // Stop and Start processing when the element of an array processed, pyshed to summary.
           if (count === threadIds.length) {
-        // threadLib.saveThread(samary, function (errorInSave, savedThreadInstance) {
-        //   if (errorInSave) {
-        //     res.send(errorInSave);
-        //   }
-        //   res.send('all data saved');
-        // });
-            res.send(samary);
+        threadLib.saveThread(samary, function (errorInSave, savedThreadInstance) {
+          if (errorInSave) {
+            res.send(errorInSave);
+          }
+          res.send('all data saved');
+        });
+            //res.send(samary);
           }
         });
       });
     }
   });
+}
 }
 
 router.get('/message/:id', messageById);

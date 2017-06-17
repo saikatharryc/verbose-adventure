@@ -10,10 +10,6 @@ const threadSchema = new Schema({
     type: String,
     required: true,
   },
-  internalDate: {
-    type: Date,
-    required: true,
-  },
 });
 
 module.exports = threadSchema;
