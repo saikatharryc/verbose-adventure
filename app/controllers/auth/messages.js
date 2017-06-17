@@ -203,7 +203,7 @@ else{
           if (errorInSave) {
             res.send(errorInSave);
           }
-          res.send('all data saved');
+          res.status(200).json({type:'success',info:'Your Mails Sync finished Successfully.!'});
         });
             //res.send(samary);
           }

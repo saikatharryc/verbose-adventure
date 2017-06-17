@@ -8,7 +8,7 @@ function getAuthUrl(req, res, next) {
   // generate a url that asks permissions for Google+ and Google Calendar scopes
   // The scope will be delimited by space.
   const scopes = [
-    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/gmail.readonly'
   ];
   const url = `${CONFIG.host}/o/oauth2/v2/auth?scope=${scopes}&access_type=offline&include_granted_scopes=true&redirect_uri=${CONFIG.redirect_uris[1]}&response_type=code&client_id=${CONFIG.client_id}`;
   console.log(url);

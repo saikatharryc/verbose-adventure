@@ -8,7 +8,6 @@ const threadSchema = new Schema({
   },
   message: {
     type: String,
-    required: true,
   },
 });
 
