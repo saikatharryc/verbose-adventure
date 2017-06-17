@@ -18,7 +18,7 @@ function getAuthUrl(req, res, next) {
     'https://www.googleapis.com/auth/gmail.readonly'
   ];
   const url = `${CONFIG.host}/o/oauth2/v2/auth?scope=${scopes}&access_type=offline&include_granted_scopes=true&redirect_uri=${CONFIG.redirect_uris[1]}&response_type=code&client_id=${CONFIG.client_id}`;
-  console.log(url);
+  //console.log(url);
   res.render('login',{url});
 }
 
