@@ -12,10 +12,7 @@ function getAuthUrl(req, res, next) {
   ];
   const url = `${CONFIG.host}/o/oauth2/v2/auth?scope=${scopes}&access_type=offline&include_granted_scopes=true&redirect_uri=${CONFIG.redirect_uris[1]}&response_type=code&client_id=${CONFIG.client_id}`;
   console.log(url);
-  res.send(`
-       <h1>Authentication using google oAuth</h1>
-        <a href=${url}>Login</a>
-        `);
+  res.render('login',{url});
 }
 
 function catchBack(req, res, next) {
